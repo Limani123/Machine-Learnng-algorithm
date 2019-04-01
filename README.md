@@ -1,4 +1,4 @@
-# Machine-Learnng-algorithm
+# Machine-Learnng-algorithms
 
 1. Clustering of the IRIS dataset using k -means and k -medoids algorithms 
 2. Classification of the IRIS dataset using single-layer and multi-layer perceptron neural network.
