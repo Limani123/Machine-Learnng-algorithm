@@ -1,0 +1,106 @@
+clc;
+clear;
+data = load("iris.txt");
+data = [data zeros(150,3)];
+
+data(1:50,6)=1;
+data(51:100,7)=1;
+data(101:150,8)=1;
+
+A=data(1:50,3:8);
+B=data(51:100,3:8);
+C=data(101:150,3:8);
+
+dataTest = [];
+dataTrain = [];
+
+mat = [];
+score = [];
+for i = 3:6
+score = [];
+cv1 = cvpartition(size(A,1),'HoldOut',i/10);
+id = cv1.test;
+dataTest = A(~id,:);
+dataTrain = A(id,:);
+
+cv = cvpartition(size(B,1),'HoldOut',i/10);
+id = cv.test;
+dataTest = [dataTest;B(~id,:)];
+dataTrain = [dataTrain;B(id,:)];
+
+cv = cvpartition(size(C,1),'HoldOut',i/10);
+id = cv.test;
+dataTest = [dataTest;C(~id,:)];
+dataTrain = [dataTrain;C(id,:)];
+
+%Mdl = fitcsvm(dataTrain(:,1:2),dataTrain(:,4));
+dataTrain = dataTrain(randperm(size(dataTrain,1)),:);
+dataTest = dataTest(randperm(size(dataTest,1)),:);
+
+Mdl1 = fitcsvm(dataTrain(:,1:2),dataTrain(:,4),'KernelFunction','rbf','classNames',[0,1]);
+[label,score1] = predict(Mdl1,dataTest(:,1:2));
+
+score = [score score1];
+
+%acc = 100*(count/length(label));
+mat(i-2,1) = i*0.1;
+
+Mdl2 = fitcsvm(dataTrain(:,1:2),dataTrain(:,5),'KernelFunction','rbf','classNames',[0,1]);
+[label,score1] = predict(Mdl2,dataTest(:,1:2));
+score = [score score1];
+
+    
+%acc = 100*(count/length(label));
+%mat(i-2,3) = acc;
+
+Mdl3 = fitcsvm(dataTrain(:,1:2),dataTrain(:,6),'KernelFunction','rbf','classNames',[0,1]);
+[label,score1] = predict(Mdl3,dataTest(:,1:2));
+score = [score score1];
+
+    
+%acc = 100*(count/length(label));
+%mat(i-2,4) = acc;
+
+
+[value,index] = max(score(:,[2 4 6])');
+
+
+
+count = 0;
+for p =1:length(index)
+    if index(p)==dataTest(p,3)
+        count=count+1;
+    end
+end
+acc = 100*(count/length(label));
+mat(i-2,2)=acc;
+
+d = 0.02;
+[x1Grid,x2Grid] = meshgrid(min(dataTest(:,1)):d:max(dataTest(:,1)),...
+min(dataTest(:,2)):d:max(dataTest(:,2)));
+xGrid = [x1Grid(:),x2Grid(:)];
+N = size(xGrid,1);
+Scores = zeros(N,3);
+
+[~,score] = predict(Mdl1,xGrid);
+Scores(:,1) = score(:,2); % Second column contains positive-class scores
+[~,score] = predict(Mdl2,xGrid);
+Scores(:,2) = score(:,2); % Second column contains positive-class scores
+[~,score] = predict(Mdl3,xGrid);
+Scores(:,3) = score(:,2); % Second column contains positive-class scores
+[~,maxScore] = max(Scores,[],2);
+%size(maxScore)
+figure
+gscatter(xGrid(:,1),xGrid(:,2),maxScore,[0.1 0.5 0.5; 0.5 0.1 0.5; 0.5 0.5 0.1])
+hold on
+gscatter(dataTest(:,1),dataTest(:,2),index)
+
+
+
+end
+
+mat
+
+%scatter(dataTest(:,1),dataTest(:,2),30,dataTest(:,3),'filled');
+%figure
+%scatter(dataTest(:,1),dataTest(:,2),30,index','filled');
